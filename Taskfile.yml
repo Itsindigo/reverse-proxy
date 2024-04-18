@@ -2,15 +2,20 @@ version: '3'
 
 tasks:
   server-one:
-    dir: ./server_one
+    dir: ./cmd/server_one
     cmds:
       - go run main.go
     silent: true
   server-two:
-    dir: ./server_two
+    dir: ./cmd/server_two
+    cmds:
+      - go run main.go
+    silent: true
+  proxy-server:
+    dir: ./cmd/proxy_server
     cmds:
       - go run main.go
     silent: true
 
   start-servers:
-    deps: [server-one, server-two]
+    deps: [server-one, server-two, proxy-server]
