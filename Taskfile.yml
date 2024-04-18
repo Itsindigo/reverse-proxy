@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  server-one:
+    dir: ./server_one
+    cmds:
+      - go run main.go
+    silent: true
+  server-two:
+    dir: ./server_two
+    cmds:
+      - go run main.go
+    silent: true
+
+  start-servers:
+    deps: [server-one, server-two]

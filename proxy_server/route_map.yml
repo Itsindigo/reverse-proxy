@@ -1,0 +1,13 @@
+routes:
+  - path: "/api/hello"
+    target:
+      host: "localhost"
+      port: "8080"
+      path: "/hello"
+      method: "GET"
+  - path: "/api/goodbye"
+    target:
+      host: "localhost"
+      port: "9090"
+      path: "/goodbye"
+      method: "GET"
