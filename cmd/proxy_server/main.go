@@ -18,6 +18,8 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	mux.HandleFunc("/", unknownRouteHandler)
+
 	for _, route := range routes {
 		route_handlers.RegisterProxyRoute(mux, route)
 	}
@@ -33,4 +35,14 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error starting server %s\n", err)
 	}
+}
+
+func unknownRouteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		log.Printf("No route registed at: %v", r.URL.Path)
+		http.NotFound(w, r)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hello proxy server"))
 }

@@ -9,8 +9,8 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", homeHandler)
 	mux.HandleFunc("/hello", helloHandler)
+	mux.HandleFunc("/", homeHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -26,11 +26,20 @@ func main() {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
+	fmt.Printf("%s", r.URL)
+
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
+
+	if r.Method != "GET" {
+		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Server one is OK!"))
 }

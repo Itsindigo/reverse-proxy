@@ -28,6 +28,12 @@ func main() {
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -38,6 +44,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 func goodbyeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
+		return
 	}
 
 	data := struct {
