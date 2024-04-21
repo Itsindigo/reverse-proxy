@@ -1,6 +1,9 @@
 version: '3'
 
 tasks:
+  start-app-containers:
+    cmds:
+      - docker-compose up -d
   server-one:
     dir: ./cmd/server_one
     cmds:
