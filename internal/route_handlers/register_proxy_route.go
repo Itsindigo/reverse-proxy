@@ -7,10 +7,10 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	proxy_config "github.com/itsindigo/reverse-proxy/internal/proxy_config"
+	"github.com/itsindigo/reverse-proxy/internal/route_config"
 )
 
-func RegisterProxyRoute(mux *http.ServeMux, route proxy_config.Route) {
+func RegisterProxyRoute(mux *http.ServeMux, route route_config.Route) {
 	mux.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
 		target := fmt.Sprintf("http://%s%s%s", route.Target.Host, route.Target.Port, route.Target.Path)
 		parsedUrl, err := url.Parse(target)

@@ -1,4 +1,4 @@
-package proxy_config
+package route_config
 
 import (
 	"gopkg.in/yaml.v2"
@@ -51,7 +51,7 @@ func read_config_file(path string) ([]Route, error) {
 	return routeConfig.Routes, nil
 }
 
-func Parse(config_file_path string) ([]Route, error) {
+func Load(config_file_path string) ([]Route, error) {
 	routes, err := read_config_file(config_file_path)
 
 	if err != nil {

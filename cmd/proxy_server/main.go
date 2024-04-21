@@ -5,44 +5,38 @@ import (
 	"log"
 	"net/http"
 
-	proxy_config "github.com/itsindigo/reverse-proxy/internal/proxy_config"
-	route_handlers "github.com/itsindigo/reverse-proxy/internal/route_handlers"
+	app_config "github.com/itsindigo/reverse-proxy/internal/config"
+	route_config "github.com/itsindigo/reverse-proxy/internal/route_config"
+	"github.com/itsindigo/reverse-proxy/internal/route_handlers"
 )
 
 func main() {
 	mux := http.NewServeMux()
 
-	routes, err := proxy_config.Parse("./proxy_config.yml")
+	config := app_config.NewConfig()
 
+	fmt.Println(config)
+
+	routes, err := route_config.Load("./route_definitions.yml")
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 
-	mux.HandleFunc("/", unknownRouteHandler)
+	mux.HandleFunc("/", route_handlers.UnknownRouteHandler)
 
 	for _, route := range routes {
 		route_handlers.RegisterProxyRoute(mux, route)
 	}
 
 	server := &http.Server{
-		Addr:    ":6666",
+		Addr:    fmt.Sprintf(":%s", config.ProxyServer.Port),
 		Handler: mux,
 	}
 
-	log.Println("Server is listening on http://localhost:6666")
+	log.Printf("Server is listening on http://localhost:%s", config.ProxyServer.Port)
 	err = server.ListenAndServe()
 
 	if err != nil {
 		fmt.Printf("Error starting server %s\n", err)
 	}
-}
-
-func unknownRouteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		log.Printf("No route registed at: %v", r.URL.Path)
-		http.NotFound(w, r)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hello proxy server"))
 }
