@@ -15,8 +15,6 @@ func main() {
 
 	config := app_config.NewConfig()
 
-	fmt.Println(config)
-
 	routes, err := route_config.Load("./route_definitions.yml")
 	if err != nil {
 		log.Fatalf("Error: %v", err)

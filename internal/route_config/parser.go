@@ -25,8 +25,9 @@ type Target struct {
 }
 
 type Route struct {
-	Path   string `yaml:"path"`
-	Target Target `yaml:"target"`
+	Path   string     `yaml:"path"`
+	Method httpMethod `yaml:"method"`
+	Target Target     `yaml:"target"`
 }
 
 type RouteConfig struct {

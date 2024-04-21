@@ -9,8 +9,8 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/hello", helloHandler)
-	mux.HandleFunc("/", homeHandler)
+	mux.HandleFunc("GET /hello", helloHandler)
+	mux.HandleFunc("GET /", homeHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -34,21 +34,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-
-	if r.Method != "GET" {
-		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Server one is OK!"))
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
-	}
-
 	data := struct {
 		Hello string `json:"hello"`
 	}{

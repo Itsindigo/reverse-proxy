@@ -10,7 +10,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", homeHandler)
-	mux.HandleFunc("/goodbye", goodbyeHandler)
+	mux.HandleFunc("GET /goodbye", goodbyeHandler)
 
 	server := &http.Server{
 		Addr:    ":9090",
@@ -42,11 +42,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func goodbyeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method is not supported", http.StatusMethodNotAllowed)
-		return
-	}
-
 	data := struct {
 		Goodbye string `json:"goodbye"`
 	}{

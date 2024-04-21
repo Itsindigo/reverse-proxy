@@ -11,7 +11,7 @@ import (
 )
 
 func RegisterProxyRoute(mux *http.ServeMux, route route_config.Route) {
-	mux.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("%s %s", route.Target.Method, route.Path), func(w http.ResponseWriter, r *http.Request) {
 		target := fmt.Sprintf("http://%s%s%s", route.Target.Host, route.Target.Port, route.Target.Path)
 		parsedUrl, err := url.Parse(target)
 
@@ -21,7 +21,6 @@ func RegisterProxyRoute(mux *http.ServeMux, route route_config.Route) {
 			return
 		}
 
-		fmt.Printf("URL: %v. TARGET: %v\n", parsedUrl, target)
 		proxy := &httputil.ReverseProxy{
 			Director: func(pr *http.Request) {
 				targetURL := url.URL{

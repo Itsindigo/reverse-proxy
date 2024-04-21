@@ -24,7 +24,7 @@ func NewConfig() *AppConfig {
 		Redis: RedisConfig{
 			Port:     "6379",
 			Host:     "localhost",
-			Password: "",
+			Password: "boop",
 			Database: "reverse-proxy",
 		},
 		ProxyServer: ProxyServerConfig{
