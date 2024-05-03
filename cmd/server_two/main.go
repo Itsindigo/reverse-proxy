@@ -50,10 +50,7 @@ func goodbyeHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	encoder := json.NewEncoder(w)
-	err := encoder.Encode(data)
-
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, "Error encoding JSON", http.StatusInternalServerError)
 		return
 	}
