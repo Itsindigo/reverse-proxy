@@ -1,4 +1,6 @@
-version: '1'
+global_rate_limit:
+  strategy: "token_bucket"
+  requests_per_minute: 100
 
 routes:
   - path: "/api/hello"

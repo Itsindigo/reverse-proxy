@@ -7,12 +7,12 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"github.com/itsindigo/reverse-proxy/internal/connections"
 	"github.com/itsindigo/reverse-proxy/internal/route_config"
 )
 
-func RegisterProxyRoute(mux *http.ServeMux, route route_config.Route) {
+func RegisterProxyRoute(mux *http.ServeMux, rc *connections.RedisClient, route route_config.Route) {
 	mux.HandleFunc(fmt.Sprintf("%s %s", route.Target.Method, route.Path), func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Receiving %v", route)
 		target := fmt.Sprintf("http://%s%s%s", route.Target.Host, route.Target.Port, route.Target.Path)
 		parsedUrl, err := url.Parse(target)
 

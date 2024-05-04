@@ -2,8 +2,8 @@ package route_config
 
 import (
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 type HttpMethod string
@@ -31,7 +31,8 @@ type Target struct {
 }
 
 type RateLimit struct {
-	RateLimitStrategy RateLimitStrategy
+	RateLimitStrategy RateLimitStrategy `yaml:"strategy"`
+	RequestsPerMinute int               `yaml:"requests_per_minute"`
 }
 
 type Route struct {
@@ -42,8 +43,8 @@ type Route struct {
 }
 
 type RouteConfig struct {
-	version string  `yaml:"version"`
-	Routes  []Route `yaml:"routes"`
+	Routes          []Route   `yaml:"routes"`
+	GlobalRateLimit RateLimit `yaml:"global_rate_limit"`
 }
 
 type RouteMap struct {
@@ -52,7 +53,7 @@ type RouteMap struct {
 
 func readConfigFile(path string) ([]Route, error) {
 	var routeConfig RouteConfig
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 
 	if err != nil {
 		return nil, &RouteMapConfigError{Err: err}

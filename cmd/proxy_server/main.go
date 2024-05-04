@@ -20,7 +20,6 @@ func main() {
 	config := app_config.NewConfig()
 
 	rc := connections.CreateRedisClient(ctx, config.Redis)
-	rc.SetThing()
 
 	routes, err := route_config.Load("./route_definitions.yml")
 
@@ -31,7 +30,7 @@ func main() {
 	mux.HandleFunc("/", route_handlers.UnknownRouteHandler)
 
 	for _, route := range routes {
-		route_handlers.RegisterProxyRoute(mux, route)
+		route_handlers.RegisterProxyRoute(mux, rc, route)
 	}
 
 	server := &http.Server{
