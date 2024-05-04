@@ -7,9 +7,15 @@ routes:
       host: "localhost"
       port: ":8080"
       path: "/hello"
+    rate_limit:
+      strategy: "token_bucket"
+      requests_per_minute: 10
   - path: "/api/goodbye"
     method: "GET"
     target:
       host: "localhost"
       port: ":9090"
       path: "/goodbye"
+    rate_limit:
+      strategy: "token_bucket"
+      requests_per_minute: 10

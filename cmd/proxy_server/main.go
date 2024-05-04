@@ -1,21 +1,29 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 
-	app_config "github.com/itsindigo/reverse-proxy/internal/config"
+	"github.com/itsindigo/reverse-proxy/internal/app_config"
+	"github.com/itsindigo/reverse-proxy/internal/connections"
 	route_config "github.com/itsindigo/reverse-proxy/internal/route_config"
 	"github.com/itsindigo/reverse-proxy/internal/route_handlers"
 )
+
+var ctx = context.Background()
 
 func main() {
 	mux := http.NewServeMux()
 
 	config := app_config.NewConfig()
 
+	rc := connections.CreateRedisClient(ctx, config.Redis)
+	rc.SetThing()
+
 	routes, err := route_config.Load("./route_definitions.yml")
+
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}

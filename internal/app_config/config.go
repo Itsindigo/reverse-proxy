@@ -1,12 +1,14 @@
-package config
+package app_config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type RedisConfig struct {
 	Port     string
 	Host     string
 	Password string
-	Database string
+	Database int
 }
 
 type ProxyServerConfig struct {
@@ -19,13 +21,12 @@ type AppConfig struct {
 }
 
 func NewConfig() *AppConfig {
-	// TODO READ FROM ENV VARS.
 	return &AppConfig{
 		Redis: RedisConfig{
 			Port:     "6379",
 			Host:     "localhost",
 			Password: "boop",
-			Database: "reverse-proxy",
+			Database: 0,
 		},
 		ProxyServer: ProxyServerConfig{
 			Port: "6666",

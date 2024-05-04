@@ -6,28 +6,39 @@ import (
 	"log"
 )
 
-type httpMethod string
+type HttpMethod string
 
 const (
-	get     httpMethod = "GET"
-	put     httpMethod = "PUT"
-	patch   httpMethod = "PATCH"
-	post    httpMethod = "POST"
-	delete  httpMethod = "DELETE"
-	options httpMethod = "OPTIONS"
+	get     HttpMethod = "GET"
+	put     HttpMethod = "PUT"
+	patch   HttpMethod = "PATCH"
+	post    HttpMethod = "POST"
+	delete  HttpMethod = "DELETE"
+	options HttpMethod = "OPTIONS"
+)
+
+type RateLimitStrategy string
+
+const (
+	token_bucket = "token_bucket"
 )
 
 type Target struct {
 	Host   string
 	Port   string
 	Path   string
-	Method httpMethod
+	Method HttpMethod
+}
+
+type RateLimit struct {
+	RateLimitStrategy RateLimitStrategy
 }
 
 type Route struct {
-	Path   string     `yaml:"path"`
-	Method httpMethod `yaml:"method"`
-	Target Target     `yaml:"target"`
+	Path      string     `yaml:"path"`
+	Method    HttpMethod `yaml:"method"`
+	Target    Target     `yaml:"target"`
+	RateLimit RateLimit  `yaml:"rate_limit"`
 }
 
 type RouteConfig struct {
@@ -39,7 +50,7 @@ type RouteMap struct {
 	Routes []Route `yaml:"routes"`
 }
 
-func read_config_file(path string) ([]Route, error) {
+func readConfigFile(path string) ([]Route, error) {
 	var routeConfig RouteConfig
 	data, err := ioutil.ReadFile(path)
 
@@ -53,7 +64,7 @@ func read_config_file(path string) ([]Route, error) {
 }
 
 func Load(config_file_path string) ([]Route, error) {
-	routes, err := read_config_file(config_file_path)
+	routes, err := readConfigFile(config_file_path)
 
 	if err != nil {
 		log.Fatalf("Error reading route map config file: %v", err)
