@@ -1,4 +1,4 @@
-package route_config
+package proxy_configuration
 
 import (
 	"errors"

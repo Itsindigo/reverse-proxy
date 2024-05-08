@@ -7,7 +7,7 @@ import (
 
 func UnknownRouteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		slog.Info("No route registed at: %v", r.URL.Path)
+		slog.Info("No route registed at path", "path", r.URL.Path)
 		http.NotFound(w, r)
 		return
 	}

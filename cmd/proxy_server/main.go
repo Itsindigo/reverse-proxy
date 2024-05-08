@@ -8,7 +8,8 @@ import (
 
 	"github.com/itsindigo/reverse-proxy/internal/app_config"
 	"github.com/itsindigo/reverse-proxy/internal/connections"
-	route_config "github.com/itsindigo/reverse-proxy/internal/route_config"
+	proxy_configuration "github.com/itsindigo/reverse-proxy/internal/proxy_configuration"
+	"github.com/itsindigo/reverse-proxy/internal/repositories"
 	"github.com/itsindigo/reverse-proxy/internal/route_handlers"
 )
 
@@ -20,8 +21,9 @@ func main() {
 	config := app_config.NewConfig()
 
 	rc := connections.CreateRedisClient(ctx, config.Redis)
+	repositories := repositories.CreateApplicationRepositories(rc)
 
-	routes, err := route_config.Load("./route_definitions.yml")
+	routes, err := proxy_configuration.Load("./route_definitions.yml")
 
 	if err != nil {
 		log.Fatalf("Error: %v", err)
@@ -30,7 +32,7 @@ func main() {
 	mux.HandleFunc("/", route_handlers.UnknownRouteHandler)
 
 	for _, route := range routes {
-		route_handlers.RegisterProxyRoute(mux, rc, route)
+		route_handlers.RegisterProxyRoute(ctx, mux, repositories, route)
 	}
 
 	server := &http.Server{

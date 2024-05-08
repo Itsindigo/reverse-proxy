@@ -1,45 +1,29 @@
-package route_config
+package proxy_configuration
 
 import (
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
-)
 
-type HttpMethod string
-
-const (
-	get     HttpMethod = "GET"
-	put     HttpMethod = "PUT"
-	patch   HttpMethod = "PATCH"
-	post    HttpMethod = "POST"
-	delete  HttpMethod = "DELETE"
-	options HttpMethod = "OPTIONS"
-)
-
-type RateLimitStrategy string
-
-const (
-	token_bucket = "token_bucket"
+	"github.com/itsindigo/reverse-proxy/internal/constants"
 )
 
 type Target struct {
 	Host   string
 	Port   string
 	Path   string
-	Method HttpMethod
+	Method constants.HttpMethod
 }
 
 type RateLimit struct {
-	RateLimitStrategy RateLimitStrategy `yaml:"strategy"`
-	RequestsPerMinute int               `yaml:"requests_per_minute"`
+	RequestsPerMinute int `yaml:"requests_per_minute"`
 }
 
 type Route struct {
-	Path      string     `yaml:"path"`
-	Method    HttpMethod `yaml:"method"`
-	Target    Target     `yaml:"target"`
-	RateLimit RateLimit  `yaml:"rate_limit"`
+	Path      string               `yaml:"path"`
+	Method    constants.HttpMethod `yaml:"method"`
+	Target    Target               `yaml:"target"`
+	RateLimit RateLimit            `yaml:"rate_limit"`
 }
 
 type RouteConfig struct {
