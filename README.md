@@ -11,3 +11,11 @@ todo
   - infinite loop, every 1 second, refill all keys by 1
 - Redis Key Schema
   - On Request - key: `route_bucket:<method>:<route>:<ip>:` -> hash -> decrement if > 0 -> return 429 if 0
+
+
+
+REDIS CHEATSHEET
+
+Redis CLI: `docker exec -it proxy_server_redis redis-cli -a boop`
+
+All keys: KEYS *

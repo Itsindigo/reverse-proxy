@@ -23,5 +23,7 @@ func CreateRedisClient(ctx context.Context, options app_config.RedisConfig) *Red
 	if err != nil {
 		panic(err)
 	}
+
+	rdb.Del(ctx, "key")
 	return &RedisClient{Client: rdb}
 }

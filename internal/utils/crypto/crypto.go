@@ -2,8 +2,12 @@ package crypto
 
 import "encoding/base64"
 
-func B64Encode(s []byte) string {
-	return base64.StdEncoding.EncodeToString(s)
+type StringOrByteSlice interface {
+	string | []byte
+}
+
+func B64Encode[T StringOrByteSlice](s T) string {
+	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
 func B64Decode(s string) (string, error) {

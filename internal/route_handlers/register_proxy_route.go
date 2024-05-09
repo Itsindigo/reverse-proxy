@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"github.com/itsindigo/reverse-proxy/internal/app_errors"
 	"github.com/itsindigo/reverse-proxy/internal/proxy_configuration"
 	"github.com/itsindigo/reverse-proxy/internal/repositories"
 	"github.com/itsindigo/reverse-proxy/internal/services/ip_utils"
@@ -34,7 +35,20 @@ func RegisterProxyRoute(ctx context.Context, mux *http.ServeMux, repos *reposito
 
 		requestKey := RateLimiterService.GetUserRouteLevelRequestKey(ctx, userIP, route.Method, route.Target.Path)
 		bucket, err := RateLimiterService.GetTokenBucket(ctx, requestKey, route.RateLimit.RequestsPerMinute)
-		RateLimiterService.ApplyRequest(ctx, bucket)
+
+		if err != nil {
+			Handle500(w, err)
+			return
+		}
+
+		if err = RateLimiterService.ApplyRequest(ctx, bucket); err != nil {
+			if _, ok := err.(app_errors.BucketExhaustedError); ok {
+				Handle429(w)
+			} else {
+				Handle500(w, err)
+			}
+			return
+		}
 
 		proxy := &httputil.ReverseProxy{
 			Director: func(pr *http.Request) {

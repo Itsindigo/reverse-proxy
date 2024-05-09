@@ -12,7 +12,7 @@ func isLocalhost(ip net.IP) bool {
 
 func GetIP(remoteAddr string, forwardHeader string) (string, error) {
 	var hostKey string
-	ip, port, err := net.SplitHostPort(remoteAddr)
+	ip, _, err := net.SplitHostPort(remoteAddr)
 
 	if err != nil {
 		return "", fmt.Errorf("userip: %q is not IP:port", remoteAddr)
@@ -35,5 +35,5 @@ func GetIP(remoteAddr string, forwardHeader string) (string, error) {
 		hostKey = forwardHeader
 	}
 
-	return fmt.Sprintf("%s:%s", hostKey, port), nil
+	return hostKey, nil
 }

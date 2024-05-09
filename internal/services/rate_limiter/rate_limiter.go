@@ -15,12 +15,8 @@ type RateLimiterService struct {
 }
 
 func (rls *RateLimiterService) GetUserRouteLevelRequestKey(ctx context.Context, userIP string, method constants.HttpMethod, path string) string {
-	return fmt.Sprintf("user_route_requests:%s:%s:%s", crypto.B64Encode([]byte(userIP)), method, path)
-}
-
-// TODO: Track global requests as well as route level requests.
-func (rls *RateLimiterService) GetUserGlobalRequestKey(ctx context.Context, userIP string) string {
-	return fmt.Sprintf("user_global_requests:%s", crypto.B64Encode([]byte(userIP)))
+	fmt.Printf("IP: %v\nEncoded: %v\n", userIP, crypto.B64Encode(userIP))
+	return fmt.Sprintf("user_route_requests:%s:%s:%s", crypto.B64Encode(userIP), method, path)
 }
 
 func (rls *RateLimiterService) GetTokenBucket(ctx context.Context, requestKey string, limit int) (*repository_token_bucket.TokenBucket, error) {
@@ -34,6 +30,14 @@ func (rls *RateLimiterService) GetTokenBucket(ctx context.Context, requestKey st
 }
 
 func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *repository_token_bucket.TokenBucket) error {
+	bucket, err := rls.TokenBucketRepository.ConsumeToken(ctx, bucket)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Token Count: %d\n", bucket.TokenCount)
+
 	return nil
 }
 

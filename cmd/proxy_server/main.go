@@ -8,7 +8,7 @@ import (
 
 	"github.com/itsindigo/reverse-proxy/internal/app_config"
 	"github.com/itsindigo/reverse-proxy/internal/connections"
-	proxy_configuration "github.com/itsindigo/reverse-proxy/internal/proxy_configuration"
+	"github.com/itsindigo/reverse-proxy/internal/proxy_configuration"
 	"github.com/itsindigo/reverse-proxy/internal/repositories"
 	"github.com/itsindigo/reverse-proxy/internal/route_handlers"
 )

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/itsindigo/reverse-proxy/internal/app_errors"
 	"github.com/itsindigo/reverse-proxy/internal/connections"
 	"github.com/redis/go-redis/v9"
 )
@@ -18,8 +20,6 @@ type TokenBucket struct {
 	TokenCount int
 }
 
-// Create a token bucket at the key string provided, with a limit value.
-// TODO: Set a lifetime expire on the key, that is renewed only when a request is made.
 func (repo *TokenBucketRepository) GetOrCreateTokenBucket(ctx context.Context, key string, limit int) (*TokenBucket, error) {
 	val, err := repo.rc.Client.Get(ctx, key).Result()
 
@@ -36,11 +36,40 @@ func (repo *TokenBucketRepository) GetOrCreateTokenBucket(ctx context.Context, k
 		return &TokenBucket{Key: key, TokenCount: tokenCount}, nil
 	}
 
-	if repo.rc.Client.Set(ctx, key, limit, 0).Err(); err != nil {
-		return nil, fmt.Errorf("error setting key &q with limit %d: %w", key, limit, err)
+	if err = repo.rc.Client.Set(ctx, key, limit, 0).Err(); err != nil {
+		return nil, fmt.Errorf("error setting key %q with limit %d: %w", key, limit, err)
+	}
+
+	if err = repo.rc.Client.Expire(ctx, key, 24*time.Hour).Err(); err != nil {
+		return nil, fmt.Errorf("error setting expiry on key %q", key)
 	}
 
 	return &TokenBucket{Key: key, TokenCount: limit}, nil
+}
+
+func (repo *TokenBucketRepository) ConsumeToken(ctx context.Context, bucket *TokenBucket) (*TokenBucket, error) {
+	val, err := repo.rc.Client.Get(ctx, bucket.Key).Result()
+
+	if err != nil && err != redis.Nil {
+		return nil, fmt.Errorf("could not find bucket %q", bucket.Key)
+	}
+
+	tokenCount, err := strconv.Atoi(val)
+
+	if err != nil {
+		return nil, fmt.Errorf("bucket did not contain a valid int, got [%T, %q]", val, val)
+	}
+
+	if tokenCount <= 0 {
+		return nil, app_errors.BucketExhaustedError{}
+	}
+
+	if err = repo.rc.Client.Decr(ctx, bucket.Key).Err(); err != nil {
+		return nil, fmt.Errorf("error occurred while decrememnting count: %v", err)
+	}
+	bucket.TokenCount -= 1
+
+	return bucket, nil
 }
 
 func NewTokenBucketRepository(rc *connections.RedisClient) *TokenBucketRepository {
