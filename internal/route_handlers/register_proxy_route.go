@@ -32,8 +32,9 @@ func RegisterProxyRoute(ctx context.Context, mux *http.ServeMux, repos *reposito
 			return
 		}
 
-		requestKey := RateLimiterService.GetRequestKey(userIP, route.Method, route.Target.Path)
-		RateLimiterService.ApplyRequest(ctx, requestKey)
+		requestKey := RateLimiterService.GetUserRouteLevelRequestKey(ctx, userIP, route.Method, route.Target.Path)
+		bucket, err := RateLimiterService.GetTokenBucket(ctx, requestKey, route.RateLimit.RequestsPerMinute)
+		RateLimiterService.ApplyRequest(ctx, bucket)
 
 		proxy := &httputil.ReverseProxy{
 			Director: func(pr *http.Request) {
