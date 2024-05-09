@@ -1,30 +1,31 @@
 package rate_limiter
 
 import (
+	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/itsindigo/reverse-proxy/internal/constants"
 	"github.com/itsindigo/reverse-proxy/internal/repositories"
 	"github.com/itsindigo/reverse-proxy/internal/repositories/token_bucket"
-	"github.com/itsindigo/reverse-proxy/internal/services/ip_utils"
+	"github.com/itsindigo/reverse-proxy/internal/utils/crypto"
 )
 
 type RateLimiterService struct {
 	TokenBucketRepository repository_token_bucket.TokenBucketRepository
 }
 
-func (rls *RateLimiterService) RegisterUserIpBucket(r *http.Request, method constants.HttpMethod, path string) error {
-	requestKey, err := ip_utils.GetIpRequestKey(r)
+func (rls *RateLimiterService) GetRequestKey(userIp string, method constants.HttpMethod, path string) string {
+	return fmt.Sprintf("route_bucket:%s:%s:%s", crypto.B64Encode([]byte(userIp)), method, path)
+}
+
+func (rls *RateLimiterService) ApplyRequest(ctx context.Context, requestKey string) error {
+
+	bucket, err := rls.TokenBucketRepository.GetOrCreateTokenBucket(ctx, requestKey, 10)
 
 	if err != nil {
 		return err
 	}
 
-	// TODO Figure out this pattern + hash symbols
-	requestKey = fmt.Sprintf("route_bucket:%s:%s:%s", requestKey, method, path)
-
-	// bucket, err := rls.TokenBucketRepository.GetOrCreateTokenBucket(ctx, "some-key", route.RateLimit.RequestsPerMinute)
 	return nil
 }
 
