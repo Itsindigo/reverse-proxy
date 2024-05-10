@@ -1,11 +1,8 @@
 package proxy_configuration
 
 import (
-	"errors"
 	"fmt"
 )
-
-var ErrReadingRoutesConfig = errors.New("error reading route map config file")
 
 type RouteMapConfigError struct {
 	Err error
