@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/itsindigo/reverse-proxy/internal/app_config"
 	"github.com/itsindigo/reverse-proxy/internal/connections"
@@ -16,12 +14,6 @@ import (
 var ctx = context.Background()
 
 func start() {
-	/**
-	* 1. Establish routes that are monitored for bucket refill
-	* 2. Query Buckets that match those route patterns every * n seconds (sleep go routine per route interval?)
-	* 3. Increment counters
-	 */
-
 	config := app_config.NewConfig()
 	rc := connections.CreateRedisClient(ctx, config.Redis)
 	repositories := repositories.CreateApplicationRepositories(rc)
@@ -32,18 +24,18 @@ func start() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	refillTasks := make([]rate_limiter.BucketRefillTask, 0)
+	refillTasks := make([]func(), 0)
 
 	for _, route := range routes {
-		refillTasks = append(refillTasks, rate_limiter.BucketRefillTask{
+		refillTasks = append(refillTasks, rls.CreateRefillTask(rate_limiter.BucketRefillTask{
 			Pattern:                rls.GetUserHttpRequestLimitKeyPattern(ctx, route),
 			IncrementEveryNSeconds: 60 / route.RateLimit.RequestsPerMinute,
 			MaxTokens:              route.RateLimit.RequestsPerMinute,
-		})
+		}))
 	}
 
-	for {
-		time.Sleep(time.Second * 1)
+	for _, refillTask := range refillTasks {
+		go refillTask()
 	}
 }
 

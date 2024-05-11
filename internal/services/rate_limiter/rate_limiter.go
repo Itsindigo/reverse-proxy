@@ -3,6 +3,7 @@ package rate_limiter
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/itsindigo/reverse-proxy/internal/constants"
 	"github.com/itsindigo/reverse-proxy/internal/proxy_configuration"
@@ -52,6 +53,15 @@ func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *reposit
 	fmt.Printf("Token Count: %d\n", bucket.TokenCount)
 
 	return nil
+}
+
+func (rls *RateLimiterService) CreateRefillTask(task BucketRefillTask) func() {
+	return func() {
+		for {
+			fmt.Printf("Executing callback for: %s\n", task.Pattern)
+			time.Sleep(time.Second * 5)
+		}
+	}
 }
 
 func NewRateLimiterService(repositories *repositories.ApplicationRepositories) *RateLimiterService {
