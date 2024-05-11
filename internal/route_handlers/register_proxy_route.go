@@ -33,7 +33,7 @@ func RegisterProxyRoute(ctx context.Context, mux *http.ServeMux, repos *reposito
 			return
 		}
 
-		requestKey := RateLimiterService.GetUserRouteLevelRequestKey(ctx, userIP, route.Method, route.Target.Path)
+		requestKey := RateLimiterService.GetUserHttpRequestLimitKey(ctx, userIP, route.Method, route.Path)
 		bucket, err := RateLimiterService.GetTokenBucket(ctx, requestKey, route.RateLimit.RequestsPerMinute)
 
 		if err != nil {

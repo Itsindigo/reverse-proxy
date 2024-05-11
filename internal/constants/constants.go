@@ -14,3 +14,10 @@ const (
 func (m HttpMethod) String() string {
 	return string(m)
 }
+
+type RedisKeyNamespaces string
+
+/* Redis Key Namespaces */
+const (
+	UserHttpRequestLimit RedisKeyNamespaces = "UserHttpRequestLimit"
+)
