@@ -19,3 +19,12 @@ REDIS CHEATSHEET
 Redis CLI: `docker exec -it proxy_server_redis redis-cli -a boop`
 
 All keys: KEYS *
+
+Del all keys: flushall
+
+
+## Package Documentation
+
+`task start-servers` will start a `godoc` server on port `6060` for viewing package documentation.
+
+Documentation for the project can be found [here](http://localhost:6060/pkg/github.com/itsindigo/reverse-proxy/?m=all).
