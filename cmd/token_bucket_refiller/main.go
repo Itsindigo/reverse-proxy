@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/itsindigo/reverse-proxy/internal/app_config"
@@ -27,7 +28,8 @@ func start() {
 	refillTasks := make([]func(), 0)
 
 	for _, route := range routes {
-		refillTasks = append(refillTasks, rls.CreateRefillTask(rate_limiter.BucketRefillTask{
+		fmt.Printf("Pattern: %s", rls.GetUserHttpRequestLimitKeyPattern(ctx, route))
+		refillTasks = append(refillTasks, rls.CreateRefillTask(ctx, rate_limiter.BucketRefillTask{
 			Pattern:                rls.GetUserHttpRequestLimitKeyPattern(ctx, route),
 			IncrementEveryNSeconds: 60 / route.RateLimit.RequestsPerMinute,
 			MaxTokens:              route.RateLimit.RequestsPerMinute,

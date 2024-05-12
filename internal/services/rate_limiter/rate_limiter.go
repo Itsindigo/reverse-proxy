@@ -3,6 +3,8 @@ package rate_limiter
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/itsindigo/reverse-proxy/internal/constants"
@@ -44,7 +46,7 @@ func (rls *RateLimiterService) GetTokenBucket(ctx context.Context, requestKey st
 }
 
 func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *repository_token_bucket.TokenBucket) error {
-	bucket, err := rls.TokenBucketRepository.ConsumeToken(ctx, bucket)
+	_, err := rls.TokenBucketRepository.ConsumeToken(ctx, bucket)
 
 	if err != nil {
 		return err
@@ -55,11 +57,45 @@ func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *reposit
 	return nil
 }
 
-func (rls *RateLimiterService) CreateRefillTask(task BucketRefillTask) func() {
+func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task BucketRefillTask) func() {
+	// TODO:
+	// Query redis for keys matching task pattern
+	// Increment value by 1 if key value is < task.MaxTokens
+	// Sleep until task start time + IncrementEveryNSeconds rounded down to nearest second
 	return func() {
 		for {
-			fmt.Printf("Executing callback for: %s\n", task.Pattern)
-			time.Sleep(time.Second * 5)
+			continueAt := time.Now().Truncate(time.Second).Add(time.Duration(task.IncrementEveryNSeconds) * time.Second)
+
+			increment := func(key string, value interface{}) error {
+				valStr, ok := value.(string)
+
+				if !ok {
+					return fmt.Errorf("skipping redis key %q as value found was mistyped. expected: string, got: %T", key, value)
+				}
+
+				tokenCount, err := strconv.Atoi(valStr)
+				if err != nil {
+					return fmt.Errorf("skipping redis key %q as value could not be converted to int, err: %v", key, err)
+				}
+
+				if tokenCount >= task.MaxTokens {
+					slog.Info("Bucket full")
+					return nil
+				}
+
+				err = rls.TokenBucketRepository.SetKey(ctx, key, tokenCount+1, 0)
+
+				if err != nil {
+					return fmt.Errorf("could not set redis key %q, err: %v", key, err)
+				}
+
+				slog.Info(fmt.Sprintf("Incremented key %q by one, new value %d", key, tokenCount))
+
+				return nil
+			}
+
+			rls.TokenBucketRepository.MapKeys(ctx, task.Pattern, increment)
+			<-time.After(time.Until(continueAt))
 		}
 	}
 }

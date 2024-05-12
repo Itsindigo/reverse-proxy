@@ -72,6 +72,50 @@ func (repo *TokenBucketRepository) ConsumeToken(ctx context.Context, bucket *Tok
 	return bucket, nil
 }
 
+func (repo *TokenBucketRepository) MapKeys(ctx context.Context, pattern string, cb func(string, interface{}) error) error {
+	var cursor uint64
+	var keys []string
+	var err error
+
+	for {
+		keys, cursor, err = repo.rc.Client.Scan(ctx, cursor, pattern, 0).Result()
+
+		if err != nil {
+			return fmt.Errorf("error performing SCAN operation: %v", err)
+		}
+
+		if len(keys) > 0 {
+			values, err := repo.rc.Client.MGet(ctx, keys...).Result()
+
+			if err != nil {
+				return fmt.Errorf("error performing MGET operation: %v", err)
+			}
+
+			for i, key := range keys {
+				cb(key, values[i])
+			}
+		}
+
+		if cursor == 0 {
+			break
+		}
+	}
+	return nil
+}
+
+func (repo *TokenBucketRepository) SetKey(
+	ctx context.Context,
+	key string,
+	val interface{},
+	expireAt time.Duration,
+) error {
+	err := repo.rc.Client.Set(ctx, key, val, expireAt)
+	if err != nil {
+		return fmt.Errorf("could not set key %q, err: %v", key, err)
+	}
+	return nil
+}
+
 func NewTokenBucketRepository(rc *connections.RedisClient) *TokenBucketRepository {
 	return &TokenBucketRepository{rc: rc}
 }
