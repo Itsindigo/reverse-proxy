@@ -28,3 +28,11 @@ Del all keys: flushall
 `task start-servers` will start a `godoc` server on port `6060` for viewing package documentation.
 
 Documentation for the project can be found [here](http://localhost:6060/pkg/github.com/itsindigo/reverse-proxy/?m=all).
+
+
+## TODO 
+
+- Implement different rate limiting strategies that can be configured via the proxy config file.
+- Look at TLS/Ingress/Firewalls
+- Implement an additional rate limiter that tracks a user's requests across all routes.
+- Add a boat load of tests including a long running integration test that hits the proxy with a bunch of requests.
