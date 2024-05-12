@@ -58,10 +58,6 @@ func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *reposit
 }
 
 func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task BucketRefillTask) func() {
-	// TODO:
-	// Query redis for keys matching task pattern
-	// Increment value by 1 if key value is < task.MaxTokens
-	// Sleep until task start time + IncrementEveryNSeconds rounded down to nearest second
 	return func() {
 		for {
 			continueAt := time.Now().Truncate(time.Second).Add(time.Duration(task.IncrementEveryNSeconds) * time.Second)
@@ -72,7 +68,6 @@ func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task Bucket
 				if !ok {
 					return fmt.Errorf("skipping redis key %q as value found was mistyped. expected: string, got: %T", key, value)
 				}
-
 				tokenCount, err := strconv.Atoi(valStr)
 				if err != nil {
 					return fmt.Errorf("skipping redis key %q as value could not be converted to int, err: %v", key, err)
@@ -86,11 +81,10 @@ func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task Bucket
 				err = rls.TokenBucketRepository.SetKey(ctx, key, tokenCount+1, 0)
 
 				if err != nil {
-					return fmt.Errorf("could not set redis key %q, err: %v", key, err)
+					return fmt.Errorf("could not set redis key %s, err: %v", key, err)
 				}
 
-				slog.Info(fmt.Sprintf("Incremented key %q by one, new value %d", key, tokenCount))
-
+				slog.Info("Incremented Key", slog.String("key", key), slog.Int("new_value", tokenCount))
 				return nil
 			}
 

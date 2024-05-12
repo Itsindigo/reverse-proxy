@@ -64,5 +64,5 @@ func RegisterProxyRoute(ctx context.Context, mux *http.ServeMux, repos *reposito
 		proxy.ServeHTTP(w, r)
 	})
 
-	slog.Info("Registered route", "path", route.Path)
+	slog.Info("Registered route", slog.String("path", route.Path))
 }

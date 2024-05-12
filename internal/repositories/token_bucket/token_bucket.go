@@ -3,6 +3,7 @@ package repository_token_bucket
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -92,7 +93,10 @@ func (repo *TokenBucketRepository) MapKeys(ctx context.Context, pattern string, 
 			}
 
 			for i, key := range keys {
-				cb(key, values[i])
+				err = cb(key, values[i])
+				if err != nil {
+					slog.Error("Error executing callback on key", slog.String("key", key), slog.Any("error", err))
+				}
 			}
 		}
 
@@ -109,9 +113,9 @@ func (repo *TokenBucketRepository) SetKey(
 	val interface{},
 	expireAt time.Duration,
 ) error {
-	err := repo.rc.Client.Set(ctx, key, val, expireAt)
+	err := repo.rc.Client.Set(ctx, key, val, expireAt).Err()
 	if err != nil {
-		return fmt.Errorf("could not set key %q, err: %v", key, err)
+		return err
 	}
 	return nil
 }

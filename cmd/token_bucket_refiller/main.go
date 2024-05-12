@@ -28,7 +28,7 @@ func start() {
 	refillTasks := make([]func(), 0)
 
 	for _, route := range routes {
-		fmt.Printf("Pattern: %s", rls.GetUserHttpRequestLimitKeyPattern(ctx, route))
+		fmt.Printf("Starting Refill Task For Pattern: %s\n", rls.GetUserHttpRequestLimitKeyPattern(ctx, route))
 		refillTasks = append(refillTasks, rls.CreateRefillTask(ctx, rate_limiter.BucketRefillTask{
 			Pattern:                rls.GetUserHttpRequestLimitKeyPattern(ctx, route),
 			IncrementEveryNSeconds: 60 / route.RateLimit.RequestsPerMinute,
