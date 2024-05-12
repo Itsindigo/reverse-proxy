@@ -36,3 +36,4 @@ Documentation for the project can be found [here](http://localhost:6060/pkg/gith
 - Look at TLS/Ingress/Firewalls
 - Implement an additional rate limiter that tracks a user's requests across all routes.
 - Add a boat load of tests including a long running integration test that hits the proxy with a bunch of requests.
+- Maybe stick it in a k8s cluster with Services/Ingresses/NetworkPolicies
