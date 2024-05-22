@@ -26,19 +26,10 @@ func start(ctx context.Context, wg *sync.WaitGroup) {
 	routes, err := proxy_configuration.Load("./RouteDefinitions.yml")
 
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("Error loading route configurations: %v", err)
 	}
 
-	refillTasks := make([]func(ctx context.Context, wg *sync.WaitGroup), 0)
-
-	for _, route := range routes {
-		slog.Info("Starting Refill Task For Pattern", slog.String("pattern", rls.GetUserHttpRequestLimitKeyPattern(ctx, route)))
-		refillTasks = append(refillTasks, rls.CreateRefillTask(ctx, rate_limiter.BucketRefillTask{
-			Pattern:                   rls.GetUserHttpRequestLimitKeyPattern(ctx, route),
-			IncrementNTokensPerSecond: route.RateLimit.RequestsPerMinute / 60,
-			MaxTokens:                 route.RateLimit.RequestsPerMinute,
-		}))
-	}
+	refillTasks := createRefillTasks(ctx, rls, routes)
 
 	for _, refillTask := range refillTasks {
 		wg.Add(1)
@@ -46,6 +37,24 @@ func start(ctx context.Context, wg *sync.WaitGroup) {
 	}
 
 	<-ctx.Done()
+}
+
+func createRefillTasks(ctx context.Context, rls *rate_limiter.RateLimiterService, routes []proxy_configuration.Route) []func(ctx context.Context, wg *sync.WaitGroup) {
+	refillTasks := make([]func(ctx context.Context, wg *sync.WaitGroup), 0, len(routes))
+
+	for _, route := range routes {
+		pattern := rls.GetUserHttpRequestLimitKeyPattern(ctx, route)
+		slog.Info("Starting Refill Task For Pattern", slog.String("pattern", rls.GetUserHttpRequestLimitKeyPattern(ctx, route)))
+
+		refillTask := rls.CreateRefillTask(ctx, rate_limiter.BucketRefillTask{
+			Pattern:                   pattern,
+			IncrementNTokensPerSecond: route.RateLimit.RequestsPerMinute / 60,
+			MaxTokens:                 route.RateLimit.RequestsPerMinute,
+		})
+
+		refillTasks = append(refillTasks, refillTask)
+	}
+	return refillTasks
 }
 
 func main() {
