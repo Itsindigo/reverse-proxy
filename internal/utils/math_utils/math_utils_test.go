@@ -4,11 +4,11 @@ import (
 	"testing"
 )
 
-func TestToFixed(t *testing.T) {
-	got := ToFixed(16.666666, 2)
-	want := 16.67
+func TestMin(t *testing.T) {
+	got := Min(3, 9)
+	want := 3
 
 	if got != want {
-		t.Errorf("got '%f' want '%f'", got, want)
+		t.Errorf("got '%d' want '%d'", got, want)
 	}
 }

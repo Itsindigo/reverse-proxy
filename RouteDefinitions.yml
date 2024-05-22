@@ -10,7 +10,7 @@ routes:
       port: ":8080"
       path: "/hello"
     rate_limit:
-      requests_per_minute: 10
+      requests_per_minute: 1000
   - path: "/api/goodbye"
     method: "GET"
     target:
@@ -18,4 +18,4 @@ routes:
       port: ":9090"
       path: "/goodbye"
     rate_limit:
-      requests_per_minute: 10
+      requests_per_minute: 1000

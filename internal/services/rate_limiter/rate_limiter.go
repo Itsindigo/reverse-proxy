@@ -12,12 +12,13 @@ import (
 	"github.com/itsindigo/reverse-proxy/internal/repositories"
 	"github.com/itsindigo/reverse-proxy/internal/repositories/token_bucket"
 	"github.com/itsindigo/reverse-proxy/internal/utils/crypto"
+	"github.com/itsindigo/reverse-proxy/internal/utils/math_utils"
 )
 
 type BucketRefillTask struct {
-	Pattern                string
-	IncrementEveryNSeconds int
-	MaxTokens              int
+	Pattern                   string
+	IncrementNTokensPerSecond int
+	MaxTokens                 int
 }
 
 type RateLimiterService struct {
@@ -60,7 +61,7 @@ func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *reposit
 func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task BucketRefillTask) func() {
 	return func() {
 		for {
-			continueAt := time.Now().Truncate(time.Second).Add(time.Duration(task.IncrementEveryNSeconds) * time.Second)
+			continueAt := time.Now().Truncate(time.Second).Add(1 * time.Second)
 
 			increment := func(key string, value interface{}) error {
 				valStr, ok := value.(string)
@@ -73,18 +74,20 @@ func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task Bucket
 					return fmt.Errorf("skipping redis key %q as value could not be converted to int, err: %v", key, err)
 				}
 
-				if tokenCount >= task.MaxTokens {
-					slog.Info("Bucket full")
+				newTokenCount := tokenCount + task.IncrementNTokensPerSecond
+				newTokenCount = math_utils.Min(newTokenCount, task.MaxTokens)
+
+				if tokenCount == newTokenCount {
 					return nil
 				}
 
-				err = rls.TokenBucketRepository.SetKey(ctx, key, tokenCount+1, 0)
+				err = rls.TokenBucketRepository.SetKey(ctx, key, newTokenCount, 0)
 
 				if err != nil {
 					return fmt.Errorf("could not set redis key %s, err: %v", key, err)
 				}
 
-				slog.Info("Incremented Key", slog.String("key", key), slog.Int("new_value", tokenCount))
+				slog.Info("Incremented Key", slog.String("key", key), slog.Int("new_value", newTokenCount))
 				return nil
 			}
 
