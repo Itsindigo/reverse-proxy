@@ -14,26 +14,26 @@ The reverse proxy implementation can be found in [cmd/proxy_server/main.go](./cm
 
 ### Running the Proxy
 
-1. Run the docker containers, there are 5:
-  - proxy_server: The reverse proxy server, runs on :6666
-  - server_one: A dummy server that returns "Hello", runs on :8080
-  - server_two: A dummy server that returns "Goodbye", runs on :9090
-  - redis: A redis server used to store rate limiting information
-  - token_bucket_refiller: A service that refills the token buckets for the rate limiter
+1. Spin up the docker containers using `docker-compose`. This will start the following services:
+     - `proxy_server`: The reverse proxy server, runs on :6666
+     - `server_one`: A basic server that returns "Hello", runs on localhost:8080/hello
+     - `server_two`: A basic server that returns "Goodbye", runs on localhost:9090/goodbye
+     - `redis`: A redis server used to store rate limiting information
+     - `token_bucket_refiller`: A service that refills the token buckets for the rate limiter
 
-  ```
-  docker-compose up
-  ```
+    ```bash 
+    $ docker-compose up
+    ```
 
-1. Make requests to the proxy, the dummy servers are running on ports 8080 and 9090, the proxy is running on port 6666.
-  ```
-  curl localhost:6666/api/hello
-  curl localhost:6666/api/goodbye
-  ```
+2. Make requests to the proxy, see route definitions in [RouteDefinitions.yml](./RouteDefinitions.yml):
+    ```bash
+    curl localhost:6666/api/hello
+    curl localhost:6666/api/goodbye
+    ```
 
 ### Proxy Configuration
 
-The proxy is configured by a YAML file that is read in at startup. The configuration file is located at [./RouteDefinitions.yaml](./RouteDefinitions.yaml). 
+The proxy is configured by a YAML file that is read in at startup. The configuration file is located at [./RouteDefinitions.yml](./RouteDefinitions.yml). 
 
 The configuration file is a list of routes to be mounted by the proxy, and a `Target` field that specifies the address of the service that the proxy should route requests to. The `rate_limit` field specifies the rate limit for the route in requests per minute.
 
