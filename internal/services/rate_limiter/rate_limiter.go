@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/itsindigo/reverse-proxy/internal/constants"
@@ -56,41 +57,48 @@ func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *reposit
 	return nil
 }
 
-func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task BucketRefillTask) func() {
-	return func() {
+func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task BucketRefillTask) func(context.Context, *sync.WaitGroup) {
+	return func(ctx context.Context, wg *sync.WaitGroup) {
+		defer wg.Done()
 		for {
-			continueAt := time.Now().Truncate(time.Second).Add(1 * time.Second)
+			select {
+			case <-ctx.Done():
+				slog.Info("Shutting down bucket refill process", slog.String("bucket_pattern", task.Pattern))
+				return
+			default:
+				continueAt := time.Now().Truncate(time.Second).Add(1 * time.Second)
 
-			increment := func(key string, value interface{}) error {
-				valStr, ok := value.(string)
+				increment := func(key string, value interface{}) error {
+					valStr, ok := value.(string)
 
-				if !ok {
-					return fmt.Errorf("skipping redis key %q as value found was mistyped. expected: string, got: %T", key, value)
-				}
-				tokenCount, err := strconv.Atoi(valStr)
-				if err != nil {
-					return fmt.Errorf("skipping redis key %q as value could not be converted to int, err: %v", key, err)
-				}
+					if !ok {
+						return fmt.Errorf("skipping redis key %q as value found was mistyped. expected: string, got: %T", key, value)
+					}
+					tokenCount, err := strconv.Atoi(valStr)
+					if err != nil {
+						return fmt.Errorf("skipping redis key %q as value could not be converted to int, err: %v", key, err)
+					}
 
-				newTokenCount := tokenCount + task.IncrementNTokensPerSecond
-				newTokenCount = math_utils.Min(newTokenCount, task.MaxTokens)
+					newTokenCount := tokenCount + task.IncrementNTokensPerSecond
+					newTokenCount = math_utils.Min(newTokenCount, task.MaxTokens)
 
-				if tokenCount == newTokenCount {
+					if tokenCount == newTokenCount {
+						return nil
+					}
+
+					err = rls.TokenBucketRepository.SetKey(ctx, key, newTokenCount, 0)
+
+					if err != nil {
+						return fmt.Errorf("could not set redis key %s, err: %v", key, err)
+					}
+
+					slog.Info("Refilling Bucket Key", slog.String("key", key), slog.Int("new_value", newTokenCount))
 					return nil
 				}
 
-				err = rls.TokenBucketRepository.SetKey(ctx, key, newTokenCount, 0)
-
-				if err != nil {
-					return fmt.Errorf("could not set redis key %s, err: %v", key, err)
-				}
-
-				slog.Info("Refilling Bucket Key", slog.String("key", key), slog.Int("new_value", newTokenCount))
-				return nil
+				rls.TokenBucketRepository.MapKeys(ctx, task.Pattern, increment)
+				<-time.After(time.Until(continueAt))
 			}
-
-			rls.TokenBucketRepository.MapKeys(ctx, task.Pattern, increment)
-			<-time.After(time.Until(continueAt))
 		}
 	}
 }
