@@ -34,6 +34,6 @@ func GetIP(remoteAddr string, forwardHeader string) (string, error) {
 	if len(forwardHeader) > 0 {
 		host = forwardHeader
 	}
-	fmt.Printf("STRING CASTING: %s\n", userIP)
+
 	return host, nil
 }
