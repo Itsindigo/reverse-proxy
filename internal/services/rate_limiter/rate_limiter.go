@@ -53,8 +53,6 @@ func (rls *RateLimiterService) ApplyRequest(ctx context.Context, bucket *reposit
 		return err
 	}
 
-	fmt.Printf("Token Count: %d\n", bucket.TokenCount)
-
 	return nil
 }
 
