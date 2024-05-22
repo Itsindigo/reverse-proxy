@@ -22,6 +22,11 @@ The reverse proxy implementation can be found in [cmd/proxy_server/main.go](./cm
   ```
   task start-servers
   ```
+3. Make requests to the proxy, the dummy servers are running on ports 8080 and 9090, the proxy is running on port 6666.
+  ```
+  curl localhost:6666/api/hello
+  curl localhost:6666/api/goodbye
+  ```
 
 ### Proxy Configuration
 
