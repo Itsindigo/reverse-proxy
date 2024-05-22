@@ -24,7 +24,7 @@ func NewConfig() *AppConfig {
 	return &AppConfig{
 		Redis: RedisConfig{
 			Port:     "6379",
-			Host:     "localhost",
+			Host:     "redis",
 			Password: "boop",
 			Database: 0,
 		},

@@ -23,7 +23,7 @@ func main() {
 	rc := connections.CreateRedisClient(ctx, config.Redis)
 	repositories := repositories.CreateApplicationRepositories(rc)
 
-	routes, err := proxy_configuration.Load("../../RouteDefinitions.yml")
+	routes, err := proxy_configuration.Load("./RouteDefinitions.yml")
 
 	if err != nil {
 		log.Fatalf("Error: %v", err)

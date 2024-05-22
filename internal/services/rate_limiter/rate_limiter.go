@@ -85,7 +85,7 @@ func (rls *RateLimiterService) CreateRefillTask(ctx context.Context, task Bucket
 					return fmt.Errorf("could not set redis key %s, err: %v", key, err)
 				}
 
-				slog.Info("Incremented Key", slog.String("key", key), slog.Int("new_value", newTokenCount))
+				slog.Info("Refilling Bucket Key", slog.String("key", key), slog.Int("new_value", newTokenCount))
 				return nil
 			}
 

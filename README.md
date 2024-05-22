@@ -14,15 +14,18 @@ The reverse proxy implementation can be found in [cmd/proxy_server/main.go](./cm
 
 ### Running the Proxy
 
-1. Run the docker containers, currently just redis used for rate limiting.
+1. Run the docker containers, there are 5:
+  - proxy_server: The reverse proxy server, runs on :6666
+  - server_one: A dummy server that returns "Hello", runs on :8080
+  - server_two: A dummy server that returns "Goodbye", runs on :9090
+  - redis: A redis server used to store rate limiting information
+  - token_bucket_refiller: A service that refills the token buckets for the rate limiter
+
   ```
-  docker-compose up -d
+  docker-compose up
   ```
-2. Run the system components, this is the proxy_server, the dummy servers one and two, and a separate process that refills token buckets in redis.
-  ```
-  task start-servers
-  ```
-3. Make requests to the proxy, the dummy servers are running on ports 8080 and 9090, the proxy is running on port 6666.
+
+1. Make requests to the proxy, the dummy servers are running on ports 8080 and 9090, the proxy is running on port 6666.
   ```
   curl localhost:6666/api/hello
   curl localhost:6666/api/goodbye
@@ -38,7 +41,7 @@ The configuration file is a list of routes to be mounted by the proxy, and a `Ta
   - path: "/api/goodbye"  # Route to be mounted by the proxy
     method: "GET"         # HTTP assumed to be same on both sides
     target:               # Target configuration
-      host: "localhost"
+      host: "server_one"
       port: ":9090"
       path: "/goodbye"
     rate_limit:

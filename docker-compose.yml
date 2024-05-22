@@ -7,9 +7,60 @@ services:
     env_file:
       - path: .env
         required: true
+    networks:
+      - reverse-proxy-network
     volumes:
       - redis_data:/data
     command: redis-server --requirepass ${REDIS_PASSWORD} --save 60 1 --loglevel warning
 
+  proxy_server:
+    container_name: proxy_server
+    build:
+      dockerfile: ./cmd/proxy_server/Dockerfile
+      context: .
+    networks:
+      - reverse-proxy-network
+    ports:
+      - "6666:6666"
+    depends_on:
+      - redis
+
+  token_bucket_refiller:
+    container_name: token_bucket_refiller
+    build:
+      dockerfile: ./cmd/token_bucket_refiller/Dockerfile
+      context: .
+    networks:
+      - reverse-proxy-network
+    depends_on:
+      - redis
+    env_file:
+      - path: .env
+        required: true
+
+  server_one:
+    container_name: server_one
+    build:
+      dockerfile: ./cmd/server_one/Dockerfile
+      context: .
+    networks:
+      - reverse-proxy-network
+    ports:
+      - "8080:8080"
+
+  server_two:
+    container_name: server_two
+    build:
+      dockerfile: ./cmd/server_two/Dockerfile
+      context: .
+    networks:
+      - reverse-proxy-network
+    ports:
+      - "9090:9090"
+
 volumes:
-  redis_data:  # Defines the volume used to store Redis data.
+  redis_data: # Defines the volume used to store Redis data.
+
+networks:
+  reverse-proxy-network: # Defines the network used by the proxy server and Redis.
+    driver: bridge

@@ -6,7 +6,7 @@ routes:
   - path: "/api/hello"
     method: "GET"
     target:
-      host: "localhost"
+      host: "server_one"
       port: ":8080"
       path: "/hello"
     rate_limit:
@@ -14,7 +14,7 @@ routes:
   - path: "/api/goodbye"
     method: "GET"
     target:
-      host: "localhost"
+      host: "server_two"
       port: ":9090"
       path: "/goodbye"
     rate_limit:

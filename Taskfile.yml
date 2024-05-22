@@ -15,19 +15,19 @@ tasks:
       - go run main.go
     silent: true
   proxy-server:
-    dir: ./cmd/proxy_server
+    dir: .
     cmds:
-      - go run main.go
+      - go run ./cmd/proxy_server/main.go
     silent: true
   doc-server:
     cmds:
       - godoc -http=:6060
   token-bucket-refill:
-    dir: ./cmd/token_bucket_refiller
+    dir: .
     cmds:
-      - go run main.go
+      - go run ./cmd/token_bucket_refiller/main.go
     silent: true
 
 
   start-servers:
-    deps: [doc-server, server-one, server-two, proxy-server, token-bucket-refill]
+    deps: [doc-server, server-one, server-two, proxy-server]
