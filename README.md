@@ -21,6 +21,7 @@ The reverse proxy implementation can be found in [cmd/proxy_server/main.go](./cm
      - `redis`: A redis server used to store rate limiting information
      - `token_bucket_refiller`: A service that refills the token buckets for the rate limiter
 
+
     ```bash 
     $ docker-compose up
     ```
