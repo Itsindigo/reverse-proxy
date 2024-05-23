@@ -2,9 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/itsindigo/reverse-proxy/internal/app_config"
 	"github.com/itsindigo/reverse-proxy/internal/connections"
@@ -13,37 +19,50 @@ import (
 	"github.com/itsindigo/reverse-proxy/internal/route_handlers"
 )
 
-var ctx = context.Background()
-
-func main() {
+func getRouteHandlers(ctx context.Context, repositories *repositories.ApplicationRepositories, routes []proxy_configuration.Route) *http.ServeMux {
 	mux := http.NewServeMux()
-
-	config := app_config.NewConfig()
-
-	rc := connections.CreateRedisClient(ctx, config.Redis)
-	repositories := repositories.CreateApplicationRepositories(rc)
-
-	routes, err := proxy_configuration.Load("./RouteDefinitions.yml")
-
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-
-	mux.HandleFunc("/", route_handlers.UnknownRouteHandler)
 
 	for _, route := range routes {
 		route_handlers.RegisterProxyRoute(ctx, mux, repositories, route)
 	}
 
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%s", config.ProxyServer.Port),
-		Handler: mux,
-	}
+	mux.HandleFunc("/", route_handlers.UnknownRouteHandler)
 
-	log.Printf("Server is listening on http://localhost:%s", config.ProxyServer.Port)
-	err = server.ListenAndServe()
+	return mux
+}
+
+func main() {
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
+
+	config := app_config.NewConfig()
+	rc := connections.CreateRedisClient(shutdownCtx, config.Redis)
+	repositories := repositories.CreateApplicationRepositories(rc)
+	routes, err := proxy_configuration.Load("./RouteDefinitions.yml")
 
 	if err != nil {
-		fmt.Printf("Error starting server %s\n", err)
+		log.Fatalf("Error loading route configurations: %v", err)
 	}
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", config.ProxyServer.Port),
+		Handler: getRouteHandlers(shutdownCtx, repositories, routes),
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP Server error: %v", err)
+		}
+		log.Printf("Server is listening on http://localhost:%s", config.ProxyServer.Port)
+	}()
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	<-signals
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("HTTP shutdown error: %v", err)
+	}
+
+	slog.Info("System shutdown complete, exiting.")
 }

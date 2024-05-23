@@ -14,19 +14,30 @@ async function request(url, method, body) {
   };
 }
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 async function main() {
   const badRequests = [];
   const goodRequests = [];
   const startTime = Date.now();
   const endTime = startTime + 60000;
   while (Date.now() < endTime) {
-    const response = await request("http://localhost:6666/api/hello", "GET");
-    if (response.statusCode === 200) {
-      goodRequests.push(response);
-    } else if (response.statusCode === 429) {
-      badRequests.push(response);
+    const helloResponse = await request(
+      "http://localhost:6666/api/hello",
+      "GET"
+    );
+    if (helloResponse.statusCode === 200) {
+      goodRequests.push(helloResponse);
+    } else if (helloResponse.statusCode === 429) {
+      badRequests.push(helloResponse);
+    }
+
+    const goodbyeResponse = await request(
+      "http://localhost:6666/api/goodbye",
+      "GET"
+    );
+    if (goodbyeResponse.statusCode === 200) {
+      goodRequests.push(goodbyeResponse);
+    } else if (goodbyeResponse.statusCode === 429) {
+      badRequests.push(goodbyeResponse);
     }
   }
 
