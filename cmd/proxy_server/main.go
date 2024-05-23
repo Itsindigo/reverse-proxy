@@ -21,22 +21,20 @@ import (
 
 func getRouteHandlers(ctx context.Context, repositories *repositories.ApplicationRepositories, routes []proxy_configuration.Route) *http.ServeMux {
 	mux := http.NewServeMux()
-
 	for _, route := range routes {
 		route_handlers.RegisterProxyRoute(ctx, mux, repositories, route)
 	}
 
 	mux.HandleFunc("/", route_handlers.UnknownRouteHandler)
-
 	return mux
 }
 
 func main() {
-	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownRelease()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	config := app_config.NewConfig()
-	rc := connections.CreateRedisClient(shutdownCtx, config.Redis)
+	rc := connections.CreateRedisClient(ctx, config.Redis)
 	repositories := repositories.CreateApplicationRepositories(rc)
 	routes, err := proxy_configuration.Load("./RouteDefinitions.yml")
 
@@ -46,19 +44,24 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", config.ProxyServer.Port),
-		Handler: getRouteHandlers(shutdownCtx, repositories, routes),
+		Handler: getRouteHandlers(ctx, repositories, routes),
 	}
 
 	go func() {
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP Server error: %v", err)
 		}
-		log.Printf("Server is listening on http://localhost:%s", config.ProxyServer.Port)
 	}()
+
+	log.Printf("Server is listening on http://localhost:%s", config.ProxyServer.Port)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	<-signals
+	sig := <-signals
+	slog.Info("Received Shutdown Signal", slog.String("signal", sig.String()))
+
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("HTTP shutdown error: %v", err)
